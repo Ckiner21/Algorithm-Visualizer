@@ -21,24 +21,25 @@ pygame.display.set_caption("Algorithm Visualizer")
 icon = pygame.image.load("Sprites/Icon.png")
 pygame.display.set_icon(icon)
 window.fill(WHITE)
+title = pygame.font.SysFont("palatino linotype", 56, True)
+home_button = buttons.Button(sprite="Sprites/Home.png", name="home", size=(150,75))
 
 
 def main():
-    home_screen = pygame.Surface(window.get_size())
-    home_screen.fill(WHITE)
+    screen = pygame.Surface(window.get_size())
+    screen.fill(WHITE)
 
-    title = pygame.font.SysFont("palatino linotype", 56, True)
-    title = title.render("Algorithm Visualizer", True, RED)
-    title_x = center(title, home_screen)
+    banner = title.render("Algorithm Visualizer", True, RED)
+    banner_x = center(banner, screen)
     
     sort_button = buttons.Button(sprite="Sprites/Sort.png", func=sort_screen)
-    sort_x = center(sort_button.sprite, home_screen)
+    sort_x = center(sort_button.sprite, screen)
     path_find = buttons.Button(sprite="Sprites/Path.png", func=path_screen)
-    path_x = center(path_find.sprite, home_screen)
+    path_x = center(path_find.sprite, screen)
 
-    home_screen.blit(title, (title_x, 50))
-    sort_button.draw(home_screen, (sort_x, 175))
-    path_find.draw(home_screen, (path_x, 375))
+    screen.blit(banner, (banner_x, 50))
+    sort_button.draw(screen, (sort_x, 175))
+    path_find.draw(screen, (path_x, 375))
 
     while True:
         for event in pygame.event.get():
@@ -50,16 +51,58 @@ def main():
                 if clicked_button is not None:
                     clicked_button.click()
 
-        window.blit(home_screen, (0,0))
+        window.blit(screen, (0,0))
         pygame.display.flip()
 
 
 def sort_screen():
-    print('sort')
+    screen = pygame.Surface(window.get_size())
+    screen.fill(WHITE)
+
+    banner = title.render("Select Sort Type", True, RED)
+    banner_x = center(banner, screen)
+
+    home_button.draw(screen, (425, 500))
+    screen.blit(banner, (banner_x, 50))
+    window.blit(screen, (0,0))
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                return
+            elif event.type == MOUSEBUTTONDOWN and event.button == 1:
+                clicked_button = buttons.clicked(home_button, event.pos)
+                if clicked_button is not None:
+                    if clicked_button.name == "home":
+                        return
+
+        pygame.display.flip()
 
 
 def path_screen():
-    print('path')
+    screen = pygame.Surface(window.get_size())
+    screen.fill(WHITE)
+
+    banner = title.render("Select Path Finding", True, RED)
+    banner_x = center(banner, screen)
+
+    home_button.draw(screen, (425, 500))
+    screen.blit(banner, (banner_x, 50))
+    window.blit(screen, (0,0))
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                return
+            elif event.type == MOUSEBUTTONDOWN and event.button == 1:
+                clicked_button = buttons.clicked(home_button, event.pos)
+                if clicked_button is not None:
+                    if clicked_button.name == "home":
+                        return
+
+        pygame.display.flip()
 
 
 def center(surf_to_draw: pygame.Surface, surf: pygame.Surface) -> int:
