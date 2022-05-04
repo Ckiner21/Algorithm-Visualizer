@@ -278,8 +278,6 @@ def path_visual(path_alg, name):
     screen.blit(banner, (banner_x, 50))
     screen_buttons = [start_button, back_button, begin, end]
 
-    rect = pygame.Rect(75, 110, 450, 450)
-    pygame.draw.rect(screen, BLACK, rect, 5)
     for i in range(1,25):
         pygame.draw.line(screen, BLACK, (75 + (18*i), 110), (75 + (18*i), 560))
         pygame.draw.line(screen, BLACK, (75, 110 + (18*i)), (525, 110 + (18*i)))
@@ -321,6 +319,9 @@ def path_visual(path_alg, name):
                         rect = pygame.Rect(75 + (18*cell[0]), 
                                            110 + (18*cell[1]), 18, 18)
                         pygame.draw.rect(screen, colors[slct_type], rect)
+        # Draw border around grid, we do this at end because otherwise tile selection on edge is glitchy
+        rect = pygame.Rect(75, 110, 450, 450)
+        pygame.draw.rect(screen, BLACK, rect, 5)
 
         if started:
             print(next(path_update))
