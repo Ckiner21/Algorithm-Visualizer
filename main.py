@@ -24,7 +24,7 @@ pygame.display.set_icon(icon)
 window.fill(WHITE)
 title = pygame.font.SysFont("palatino linotype", 56, True)
 back_button = buttons.Button(sprite="Sprites/Buttons/Back.png",
-                             name="home", size=(150,75))
+                             name="back", size=(150,75))
 start_button = buttons.Button(sprite="Sprites/Buttons/Start.png",
                              name="start", size=(150,75))
 
@@ -40,7 +40,7 @@ def main():
                                  func=sort_menu)
     sort_x = center(sort_button.sprite, screen)
     path_find = buttons.Button(sprite="Sprites/Buttons/Home Screen/Path.png",
-                               func=path_screen)
+                               func=path_menu)
     path_x = center(path_find.sprite, screen)
     screen_buttons = [sort_button, path_find]
 
@@ -58,7 +58,7 @@ def main():
                 clicked_button = buttons.clicked(screen_buttons, event.pos)
                 if clicked_button is not None:
                     clicked_button.click()
-                    window.blit(screen, (0,0))
+                    window.blit(screen, (0,0)) 
 
         pygame.display.flip()
 
@@ -76,9 +76,9 @@ def sort_menu():
     for i in range(3):
         button = buttons.Button(sprite=f"Sprites/Buttons/Sorts/{i}.png",
                                 func=sort_visual, click_args=sort_type[i],
-                                size=(200,100))
+                                size=(250,125))
         button_x = center(button.sprite, screen)
-        button.draw(screen, (button_x, 125 + (125*i)))
+        button.draw(screen, (button_x, 110 + (175*i)))
         screen_buttons.append(button)
 
     back_button.draw(screen, (440, 565))
@@ -93,7 +93,7 @@ def sort_menu():
             elif event.type == MOUSEBUTTONDOWN and event.button == 1:
                 clicked_button = buttons.clicked(screen_buttons, event.pos)
                 if clicked_button is not None:
-                    if clicked_button.name == "home":
+                    if clicked_button.name == "back":
                         return
                     else:
                         clicked_button.click()
@@ -102,16 +102,25 @@ def sort_menu():
         pygame.display.flip()
     
 
-def path_screen():
+def path_menu():
     screen = pygame.Surface(window.get_size())
     screen.fill(WHITE)
 
-    banner = title.render("Coming Soon", True, RED)
+    banner = title.render("Select an algorithm", True, RED)
     banner_x = center(banner, screen)
 
+    dj_button = buttons.Button(func=path_visual, click_args=[djikstra, "Djikstra"],
+                              sprite="Sprites/Buttons/Paths/Djikstra.png")
+    djik_x = center(dj_button.sprite, screen)
+    ast_button = buttons.Button(func=path_visual, click_args=[astar, "A*"],
+                              sprite="Sprites/Buttons/Paths/AStar.png")
+    astar_x = center(ast_button.sprite, screen)
+    screen_buttons = [back_button, dj_button, ast_button]
+
+    dj_button.draw(screen, (djik_x, 175))
+    ast_button.draw(screen, (astar_x, 375))
     back_button.draw(screen, (440, 565))
     screen.blit(banner, (banner_x, 50))
-    window.blit(screen, (0,0))
 
     while True:
         for event in pygame.event.get():
@@ -119,13 +128,14 @@ def path_screen():
                 pygame.quit()
                 sys.exit()
             elif event.type == MOUSEBUTTONDOWN and event.button == 1:
-                clicked_button = buttons.clicked(back_button, event.pos)
+                clicked_button = buttons.clicked(screen_buttons, event.pos)
                 if clicked_button is not None:
-                    if clicked_button.name == "home":
+                    if clicked_button.name == "back":
                         return
                     else:
-                        break
-    
+                        clicked_button.click()
+        
+        window.blit(screen, (0,0))
         pygame.display.flip()
 
 
@@ -161,7 +171,7 @@ def sort_visual(sort_func, sort_name):
             elif event.type == MOUSEBUTTONDOWN and event.button == 1:
                 clicked_button = buttons.clicked(screen_buttons, event.pos)
                 if clicked_button is not None:
-                    if clicked_button.name == "home":
+                    if clicked_button.name == "back":
                         return
                     else:
                         if not started:
@@ -180,8 +190,10 @@ def sort_visual(sort_func, sort_name):
                          (50+i, 550), (50+i, 550-array[i]))
             time = title.render(f"Time: {round(changes[2], 2)}", True, RED, WHITE)
             screen.blit(time, (1, 575))
+
         window.blit(screen, (0,0))
         pygame.display.flip()
+
 
 def bubble(array):
     s = time.time()
@@ -230,16 +242,6 @@ def insert(array):
     yield 1
 
 
-
-def center(surf_to_draw: pygame.Surface, surf: pygame.Surface) -> int:
-    """Returns an integer representing an x coordinate that will place 
-       surf_to_draw in the center of surf if the left side of surf_to_draw is 
-       placed at x"""
-    w1 = surf.get_width()
-    w2 = surf_to_draw.get_width()
-    return (w1//2) - (w2//2)
-
-
 def make_array():
     array = [_ for _ in range(1,450)]
     # This number was found through trial and error
@@ -252,6 +254,58 @@ def make_array():
         array[index2] = tmp
     
     return array
+
+
+def path_visual(path_alg, name):
+    screen = pygame.Surface(window.get_size())
+    screen.fill(WHITE)
+
+    banner = title.render(name, True, RED)
+    banner_x = center(banner, screen)
+
+    screen = pygame.Surface(window.get_size())
+    screen.fill(WHITE)
+
+    banner = title.render(name, True, RED)
+    banner_x = center(banner, screen)
+        
+    screen_buttons = [start_button, back_button]
+    start_button.draw(screen, (250, 565))
+    back_button.draw(screen, (440, 565))
+    screen.blit(banner, (banner_x, 50))
+    window.blit(screen, (0,0))
+
+    #grid = make_grid()
+    while True:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == MOUSEBUTTONDOWN and event.button == 1:
+                clicked_button = buttons.clicked(screen_buttons, event.pos)
+                if clicked_button is not None:
+                    if clicked_button.name == "back":
+                        return
+        
+        window.blit(screen, (0, 0))
+        pygame.display.flip()
+
+
+def djikstra(grid):
+    print("Djikstra")
+
+
+def astar(grid):
+    print("A Star")
+
+
+def center(surf_to_draw: pygame.Surface, surf: pygame.Surface) -> int:
+    """Returns an integer representing an x coordinate that will place 
+       surf_to_draw in the center of surf if the left side of surf_to_draw is 
+       placed at x"""
+    w1 = surf.get_width()
+    w2 = surf_to_draw.get_width()
+    return (w1//2) - (w2//2)
 
 
 main()
