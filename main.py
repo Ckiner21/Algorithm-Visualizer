@@ -21,8 +21,10 @@ icon = pygame.image.load("Sprites/Icon.png")
 pygame.display.set_icon(icon)
 window.fill(WHITE)
 title = pygame.font.SysFont("palatino linotype", 56, True)
-home_button = buttons.Button(sprite="Sprites/Buttons/Home Screen/Home.png",
+back_button = buttons.Button(sprite="Sprites/Buttons/Back.png",
                              name="home", size=(150,75))
+start_button = buttons.Button(sprite="Sprites/Buttons/Start.png",
+                             name="start", size=(150,75))
 
 
 def main():
@@ -43,6 +45,7 @@ def main():
     screen.blit(banner, (banner_x, 50))
     sort_button.draw(screen, (sort_x, 175))
     path_find.draw(screen, (path_x, 375))
+    window.blit(screen, (0,0))
 
     while True:
         for event in pygame.event.get():
@@ -53,8 +56,8 @@ def main():
                 clicked_button = buttons.clicked(screen_buttons, event.pos)
                 if clicked_button is not None:
                     clicked_button.click()
+                    window.blit(screen, (0,0))
 
-        window.blit(screen, (0,0))
         pygame.display.flip()
 
 
@@ -65,16 +68,18 @@ def sort_screen():
     banner = title.render("Select Sort Type", True, RED)
     banner_x = center(banner, screen)
 
-    sort_func = [bubble, select, insert, quick]
-    screen_buttons = [home_button]
+    sort_type = [(bubble, "Bubble Sort"), (select, "Selection Sort"),
+                 (insert, "Insertion Sort"), (quick, "Quick Sort")]
+    screen_buttons = [back_button]
     for i in range(4):
         button = buttons.Button(sprite=f"Sprites/Buttons/Sorts/{i}.png",
-                                func=sort_func[i], size=(200,100))
+                                func=sort_visual, click_args=sort_type[i],
+                                size=(200,100))
         button_x = center(button.sprite, screen)
         button.draw(screen, (button_x, 125 + (125*i)))
         screen_buttons.append(button)
 
-    home_button.draw(screen, (440, 565))
+    back_button.draw(screen, (440, 565))
     screen.blit(banner, (banner_x, 50))
     window.blit(screen, (0,0))
 
@@ -90,11 +95,10 @@ def sort_screen():
                         return
                     else:
                         clicked_button.click()
-                        break
+                        window.blit(screen, (0, 0))
     
         pygame.display.flip()
     
-
 
 def path_screen():
     screen = pygame.Surface(window.get_size())
@@ -103,7 +107,7 @@ def path_screen():
     banner = title.render("Coming Soon", True, RED)
     banner_x = center(banner, screen)
 
-    home_button.draw(screen, (440, 565))
+    back_button.draw(screen, (440, 565))
     screen.blit(banner, (banner_x, 50))
     window.blit(screen, (0,0))
 
@@ -113,7 +117,7 @@ def path_screen():
                 pygame.quit()
                 sys.exit()
             elif event.type == MOUSEBUTTONDOWN and event.button == 1:
-                clicked_button = buttons.clicked(home_button, event.pos)
+                clicked_button = buttons.clicked(back_button, event.pos)
                 if clicked_button is not None:
                     if clicked_button.name == "home":
                         return
@@ -130,6 +134,35 @@ def center(surf_to_draw: pygame.Surface, surf: pygame.Surface) -> int:
     w1 = surf.get_width()
     w2 = surf_to_draw.get_width()
     return (w1//2) - (w2//2)
+
+
+def sort_visual(sort_func, sort_name):
+    screen = pygame.Surface(window.get_size())
+    screen.fill(WHITE)
+
+    banner = title.render(sort_name, True, RED)
+    banner_x = center(banner, screen)
+
+    screen_buttons = [start_button, back_button]
+    start_button.draw(screen, (280, 565))
+    back_button.draw(screen, (440, 565))
+    screen.blit(banner, (banner_x, 50))
+    window.blit(screen, (0,0))
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == MOUSEBUTTONDOWN and event.button == 1:
+                clicked_button = buttons.clicked(screen_buttons, event.pos)
+                if clicked_button is not None:
+                    if clicked_button.name == "home":
+                        return
+                    else:
+                        sort_func()
+
+        pygame.display.flip()
 
 
 def bubble():
