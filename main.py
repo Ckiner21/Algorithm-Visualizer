@@ -1,5 +1,6 @@
-from importlib.resources import path
+from random import randint
 import sys
+import time
 from pygame.locals import QUIT, MOUSEBUTTONDOWN
 import pygame
 import buttons
@@ -7,6 +8,7 @@ import buttons
 
 pygame.init()
 pygame.font.init()
+clock = pygame.time.Clock()
 
 
 WHITE = pygame.Color(255, 255, 255)
@@ -35,7 +37,7 @@ def main():
     banner_x = center(banner, screen)
     
     sort_button = buttons.Button(sprite="Sprites/Buttons/Home Screen/Sort.png",
-                                 func=sort_screen)
+                                 func=sort_menu)
     sort_x = center(sort_button.sprite, screen)
     path_find = buttons.Button(sprite="Sprites/Buttons/Home Screen/Path.png",
                                func=path_screen)
@@ -61,7 +63,7 @@ def main():
         pygame.display.flip()
 
 
-def sort_screen():
+def sort_menu():
     screen = pygame.Surface(window.get_size())
     screen.fill(WHITE)
 
@@ -69,9 +71,9 @@ def sort_screen():
     banner_x = center(banner, screen)
 
     sort_type = [(bubble, "Bubble Sort"), (select, "Selection Sort"),
-                 (insert, "Insertion Sort"), (quick, "Quick Sort")]
+                 (insert, "Insertion Sort")]
     screen_buttons = [back_button]
-    for i in range(4):
+    for i in range(3):
         button = buttons.Button(sprite=f"Sprites/Buttons/Sorts/{i}.png",
                                 func=sort_visual, click_args=sort_type[i],
                                 size=(200,100))
@@ -127,15 +129,6 @@ def path_screen():
         pygame.display.flip()
 
 
-def center(surf_to_draw: pygame.Surface, surf: pygame.Surface) -> int:
-    """Returns an integer representing an x coordinate that will place 
-       surf_to_draw in the center of surf if the left side of surf_to_draw is 
-       placed at x"""
-    w1 = surf.get_width()
-    w2 = surf_to_draw.get_width()
-    return (w1//2) - (w2//2)
-
-
 def sort_visual(sort_func, sort_name):
     screen = pygame.Surface(window.get_size())
     screen.fill(WHITE)
@@ -143,12 +136,23 @@ def sort_visual(sort_func, sort_name):
     banner = title.render(sort_name, True, RED)
     banner_x = center(banner, screen)
 
+    pygame.draw.line(screen, BLACK, (0, 550), 
+                    (screen.get_width(), 550),
+                     width=1)
+    pygame.draw.line(screen, BLACK, (0, 100), 
+                    (screen.get_width(), 100),
+                     width=1)                 
     screen_buttons = [start_button, back_button]
-    start_button.draw(screen, (280, 565))
+    start_button.draw(screen, (290, 565))
     back_button.draw(screen, (440, 565))
     screen.blit(banner, (banner_x, 50))
     window.blit(screen, (0,0))
 
+    array = make_array()
+    for i, val in enumerate(array):
+        pygame.draw.line(screen, BLACK,
+                         (50+i, 550), (50+i, 550-val))
+    started = False
     while True:
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -160,25 +164,94 @@ def sort_visual(sort_func, sort_name):
                     if clicked_button.name == "home":
                         return
                     else:
-                        sort_func()
+                        if not started:
+                            sort_update = sort_func(array)
+                            started = True
 
+        if started:
+            changes = next(sort_update)
+            if changes == 1:
+                started = False
+                continue
+            for i in changes[:2]:
+                pygame.draw.line(screen, WHITE,
+                         (50+i, 550), (50+i, 101))
+                pygame.draw.line(screen, BLACK,
+                         (50+i, 550), (50+i, 550-array[i]))
+            time = title.render(f"Time: {round(changes[2], 2)}", True, RED, WHITE)
+            screen.blit(time, (1, 575))
+        window.blit(screen, (0,0))
         pygame.display.flip()
 
+def bubble(array):
+    s = time.time()
+    for i in range(len(array)):
+        sorted = True
+        for j in range(len(array)-i-1):
+            if array[j] > array[j+1]:
+                sorted = False
+                tmp = array[j]
+                array[j] = array[j+1]
+                array[j+1] = tmp
+                yield (j, j+1, time.time()-s)
 
-def bubble():
-    print("bubble")
+        if sorted:
+            break
     
-
-def select():
-    print("select")
+    yield 1
 
 
-def insert():
-    print("insert")
+def select(array):
+    s = time.time()
+    for i in range(len(array)):
+        minimum = i
+        for j in range(i+1, len(array)):
+            if array[j] < array[minimum]:
+                minimum = j
+        tmp = array[minimum]
+        array[minimum] = array[i]
+        array[i] = tmp
+        yield(i, minimum, time.time()-s)
+    
+    yield 1
 
 
-def quick():
-    print("quick")
+def insert(array):
+    s = time.time()
+    for i in range(1, len(array)):
+        ptr = i
+        while array[ptr] < array[ptr-1] and ptr != 0:
+            tmp = array[ptr]
+            array[ptr] = array[ptr-1]
+            array[ptr-1] = tmp
+            ptr -= 1
+            yield(ptr, ptr+1, time.time()-s)
+    
+    yield 1
+
+
+
+def center(surf_to_draw: pygame.Surface, surf: pygame.Surface) -> int:
+    """Returns an integer representing an x coordinate that will place 
+       surf_to_draw in the center of surf if the left side of surf_to_draw is 
+       placed at x"""
+    w1 = surf.get_width()
+    w2 = surf_to_draw.get_width()
+    return (w1//2) - (w2//2)
+
+
+def make_array():
+    array = [_ for _ in range(1,450)]
+    # This number was found through trial and error
+    # leaves no resemblance of being previously sorted
+    for _ in range(800):  
+        index1 = randint(0, 448)
+        index2 = randint(0, 448)
+        tmp = array[index1]
+        array[index1] = array[index2]
+        array[index2] = tmp
+    
+    return array
 
 
 main()
