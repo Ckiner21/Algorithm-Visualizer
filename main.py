@@ -151,7 +151,8 @@ def sort_visual(sort_func, sort_name):
                      width=1)
     pygame.draw.line(screen, BLACK, (0, 100), 
                     (screen.get_width(), 100),
-                     width=1)                 
+                     width=1)             
+
     screen_buttons = [start_button, back_button]
     start_button.draw(screen, (290, 565))
     back_button.draw(screen, (440, 565))
@@ -173,10 +174,9 @@ def sort_visual(sort_func, sort_name):
                 if clicked_button is not None:
                     if clicked_button.name == "back":
                         return
-                    else:
-                        if not started:
-                            sort_update = sort_func(array)
-                            started = True
+                    elif not started:
+                        sort_update = sort_func(array)
+                        started = True
 
         if started:
             changes = next(sort_update)
@@ -259,23 +259,36 @@ def make_array():
 def path_visual(path_alg, name):
     screen = pygame.Surface(window.get_size())
     screen.fill(WHITE)
+    colors = [GREEN, RED]
 
     banner = title.render(name, True, RED)
     banner_x = center(banner, screen)
-
-    screen = pygame.Surface(window.get_size())
-    screen.fill(WHITE)
 
     banner = title.render(name, True, RED)
     banner_x = center(banner, screen)
         
-    screen_buttons = [start_button, back_button]
+    begin = buttons.Button(sprite="Sprites/Buttons/Begin.png",
+                           name="Begin", size=(75,75))
+    end = buttons.Button(sprite="Sprites/Buttons/End.png",
+                         name="End", size=(75,75))
+    begin.draw(screen, (25, 565))
+    end.draw(screen, (125, 565))
     start_button.draw(screen, (250, 565))
     back_button.draw(screen, (440, 565))
     screen.blit(banner, (banner_x, 50))
+    screen_buttons = [start_button, back_button, begin, end]
+
+    rect = pygame.Rect(75, 110, 450, 450)
+    pygame.draw.rect(screen, BLACK, rect, 5)
+    for i in range(1,25):
+        pygame.draw.line(screen, BLACK, (75 + (18*i), 110), (75 + (18*i), 560))
+        pygame.draw.line(screen, BLACK, (75, 110 + (18*i)), (525, 110 + (18*i)))
     window.blit(screen, (0,0))
 
-    #grid = make_grid()
+    grid = []
+    selecting = [False, None]
+    end_points = [None, None]
+    started = False
     while True:
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -286,13 +299,38 @@ def path_visual(path_alg, name):
                 if clicked_button is not None:
                     if clicked_button.name == "back":
                         return
-        
+                    elif clicked_button.name == "start" and not started \
+                            and None not in end_points:
+                        started = True
+                        path_update = path_alg(grid, end_points)
+                    elif clicked_button.name == "Begin":
+                        selecting = (True, 0)
+                    elif clicked_button.name == "End":
+                        selecting = (True, 1)
+                elif selecting[0]:
+                    slct_type = selecting[1]
+                    cell = convert(event.pos)
+                    if cell != -1:
+                        old = end_points[slct_type]
+                        if old is not None:  # Erase the previous cell for either start or finish location
+                            rect = pygame.Rect(75 + (18*old[0]), 
+                                               110 + (18*old[1]), 19, 19)
+                            pygame.draw.rect(screen, WHITE, rect)
+                            pygame.draw.rect(screen, BLACK, rect, 1)
+                        end_points[slct_type] = cell  # Color in cell either red or green based off start or finishing
+                        rect = pygame.Rect(75 + (18*cell[0]), 
+                                           110 + (18*cell[1]), 18, 18)
+                        pygame.draw.rect(screen, colors[slct_type], rect)
+
+        if started:
+            print(next(path_update))
+
         window.blit(screen, (0, 0))
         pygame.display.flip()
 
 
-def djikstra(grid):
-    print("Djikstra")
+def djikstra(grid, end_points):
+    yield
 
 
 def astar(grid):
@@ -307,5 +345,16 @@ def center(surf_to_draw: pygame.Surface, surf: pygame.Surface) -> int:
     w2 = surf_to_draw.get_width()
     return (w1//2) - (w2//2)
 
+
+def convert(mouse_pos):
+    x, y = mouse_pos
+    if x < 75 or x > 525 or y < 110 or y > 560:
+        print("Out of box")
+        return -1
+
+    cell_x = (x-75)//18
+    cell_y = (y-110)//18
+    return (cell_x, cell_y)
+    
 
 main()
