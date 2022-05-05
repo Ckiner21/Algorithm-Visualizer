@@ -1,13 +1,14 @@
 from random import randint
 import sys
 import time
-from pygame.locals import QUIT, MOUSEBUTTONDOWN
+from pygame.locals import QUIT, MOUSEBUTTONDOWN, MOUSEBUTTONUP
 import pygame
 import buttons
 
 
 pygame.init()
 pygame.font.init()
+pygame.event.set_allowed([QUIT, MOUSEBUTTONDOWN, MOUSEBUTTONUP])
 clock = pygame.time.Clock()
 
 
@@ -259,34 +260,40 @@ def make_array():
 def path_visual(path_alg, name):
     screen = pygame.Surface(window.get_size())
     screen.fill(WHITE)
-    colors = [GREEN, RED]
+    GREY = pygame.Color(38, 50, 56)
+    ORANGE = pygame.Color(245, 179, 66)
+    PURPLE = pygame.Color(150, 0 , 143)
+    cell_colors = [GREEN, RED, GREY]
 
     banner = title.render(name, True, RED)
     banner_x = center(banner, screen)
-
-    banner = title.render(name, True, RED)
-    banner_x = center(banner, screen)
-        
+    screen.blit(banner, (banner_x, 50))
+    
     begin = buttons.Button(sprite="Sprites/Buttons/Begin.png",
-                           name="Begin", size=(75,75))
+                           name="Begin", size=(50,50))
     end = buttons.Button(sprite="Sprites/Buttons/End.png",
-                         name="End", size=(75,75))
-    begin.draw(screen, (25, 565))
-    end.draw(screen, (125, 565))
+                         name="End", size=(50,50))
+    block = buttons.Button(sprite="Sprites/Buttons/Block.png",
+                           name="Block", size=(50,50))
+    begin.draw(screen, (25, 575))
+    end.draw(screen, (100, 575))
+    block.draw(screen, (175, 575))
     start_button.draw(screen, (250, 565))
     back_button.draw(screen, (440, 565))
-    screen.blit(banner, (banner_x, 50))
-    screen_buttons = [start_button, back_button, begin, end]
+    screen_buttons = [start_button, back_button, begin, end, block]
 
     for i in range(1,25):
         pygame.draw.line(screen, BLACK, (75 + (18*i), 110), (75 + (18*i), 560))
         pygame.draw.line(screen, BLACK, (75, 110 + (18*i)), (525, 110 + (18*i)))
     window.blit(screen, (0,0))
 
-    grid = []
-    selecting = [False, None]
-    end_points = [None, None]
     started = False
+    blocking = False
+    path = None
+    is_selecting = [False, None]
+    end_points = [None, None]
+    grid = make_grid()
+    
     while True:
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -299,43 +306,140 @@ def path_visual(path_alg, name):
                         return
                     elif clicked_button.name == "start" and not started \
                             and None not in end_points:
-                        started = True
-                        path_update = path_alg(grid, end_points)
-                    elif clicked_button.name == "Begin":
-                        selecting = (True, 0)
-                    elif clicked_button.name == "End":
-                        selecting = (True, 1)
-                elif selecting[0]:
-                    slct_type = selecting[1]
-                    cell = convert(event.pos)
-                    if cell != -1:
-                        old = end_points[slct_type]
-                        if old is not None:  # Erase the previous cell for either start or finish location
-                            rect = pygame.Rect(75 + (18*old[0]), 
-                                               110 + (18*old[1]), 19, 19)
-                            pygame.draw.rect(screen, WHITE, rect)
-                            pygame.draw.rect(screen, BLACK, rect, 1)
-                        end_points[slct_type] = cell  # Color in cell either red or green based off start or finishing
-                        rect = pygame.Rect(75 + (18*cell[0]), 
-                                           110 + (18*cell[1]), 18, 18)
-                        pygame.draw.rect(screen, colors[slct_type], rect)
+                        started = True  # Preventing user from editing grid while calculating
+                        path = path_alg(grid, end_points)
+                    elif clicked_button.name == "Begin" and not started:
+                        is_selecting = (True, 0)
+                        blocking = False
+                    elif clicked_button.name == "End" and not started:
+                        is_selecting = (True, 1)
+                        blocking = False
+                    elif not started:
+                        is_selecting = (True, 2)
+
+                elif is_selecting[0] and not started:
+                    slct_type = is_selecting[1]
+                    if slct_type == 2:
+                        blocking = True
+                    else:
+                        cell = convert(event.pos)
+                        if cell != -1:  # Make sure we are actually choosing a cell
+                            old = end_points[slct_type]
+                            if old is not None:  # Erase the previous cell for either start or finish location
+                                color_cell(old, WHITE, screen)
+                            end_points[slct_type] = cell
+                            color_cell(cell, cell_colors[slct_type], screen)
+                            grid[cell[1]][cell[0]] = [float('inf'), None, False, False]  # Allows you to use start and end points to erase blocks
+
+            elif event.type == MOUSEBUTTONUP:
+                blocking = False
+
+        if started:
+            visited = next(path)
+            if type(visited) == tuple:
+                color_cell(visited, ORANGE, screen)
+            else:
+                for i in visited:
+                    color_cell(i, PURPLE, screen)
+                started = False
+        elif blocking:
+            cell = convert(event.pos)
+            if cell != -1:
+                color_cell(cell, cell_colors[2], screen)
+                grid[cell[1]][cell[0]][3] = True
         # Draw border around grid, we do this at end because otherwise tile selection on edge is glitchy
         rect = pygame.Rect(75, 110, 450, 450)
         pygame.draw.rect(screen, BLACK, rect, 5)
 
-        if started:
-            print(next(path_update))
-
         window.blit(screen, (0, 0))
         pygame.display.flip()
-
+        clock.tick(200)
 
 def djikstra(grid, end_points):
-    yield
+    start, end = end_points
+    has_path = True
+    grid[start[1]][start[0]] = [0, None, False, False]
+
+    curr = start
+    while curr != end:
+        grid[curr[1]][curr[0]][2] = True  # Visit the current
+        distance = grid[curr[1]][curr[0]][0]
+        # For all surrounding nodes, set new distance if needed
+        if curr[1] != 0:
+            if distance + 1 < grid[curr[1]-1][curr[0]][0]: 
+                grid[curr[1]-1][curr[0]][0] = distance + 1
+                grid[curr[1]-1][curr[0]][1] = curr
+           
+        if curr[0] != 0:
+            if distance + 1 < grid[curr[1]][curr[0]-1][0]: 
+                grid[curr[1]][curr[0]-1][0] = distance + 1
+                grid[curr[1]][curr[0]-1][1] = curr
+
+        if curr[1] != 24:
+            if distance + 1 < grid[curr[1]+1][curr[0]][0]: 
+                grid[curr[1]+1][curr[0]][0] = distance + 1
+                grid[curr[1]+1][curr[0]][1] = curr
+           
+        if curr[0] != 24:
+            if distance + 1 < grid[curr[1]][curr[0]+1][0]: 
+                grid[curr[1]][curr[0]+1][0] = distance + 1
+                grid[curr[1]][curr[0]+1][1] = curr
+
+        yield curr
+        #Calculate next shortest that isnt visited
+        minimum = (float('inf'), None)
+        for row in range(len(grid)):
+            for col in range(len(grid)):
+                to_be_checked = grid[row][col]
+                if to_be_checked[2] == False and to_be_checked[0] < minimum[0] \
+                        and to_be_checked[3] == False:
+                    minimum = (to_be_checked[0], (col, row))
+
+        if minimum[1] is None:
+            has_path = False
+            break
+        curr = minimum[1]
+
+    path = []
+    if has_path:
+        curr = grid[end[1]][end[0]][1]
+        while curr != start:
+            path.append(curr)
+            previous = grid[curr[1]][curr[0]][1]
+            curr = previous
+
+    yield path
 
 
 def astar(grid):
     print("A Star")
+
+
+def convert(mouse_pos):
+    x, y = mouse_pos
+    if x < 75 or x >= 525 or y < 110 or y >= 560:
+        return -1
+
+    cell_x = (x-75)//18
+    cell_y = (y-110)//18
+    return (cell_x, cell_y)
+
+
+def color_cell(cell, color, screen):
+    rect = pygame.Rect(75 + (18*cell[0]), 110 + (18*cell[1]), 19, 19)
+    pygame.draw.rect(screen, color, rect)
+    pygame.draw.rect(screen, BLACK, rect, 1)
+
+
+def make_grid():
+    grid = []
+    for i in range(25):
+        row = []
+        for j in range(25):
+            row.append([float('inf'), None, False, False])  # Distance, node taken to get there, visited, blocked
+        grid.append(row)
+    
+    return grid
 
 
 def center(surf_to_draw: pygame.Surface, surf: pygame.Surface) -> int:
@@ -345,17 +449,6 @@ def center(surf_to_draw: pygame.Surface, surf: pygame.Surface) -> int:
     w1 = surf.get_width()
     w2 = surf_to_draw.get_width()
     return (w1//2) - (w2//2)
-
-
-def convert(mouse_pos):
-    x, y = mouse_pos
-    if x < 75 or x > 525 or y < 110 or y > 560:
-        print("Out of box")
-        return -1
-
-    cell_x = (x-75)//18
-    cell_y = (y-110)//18
-    return (cell_x, cell_y)
     
 
 main()
