@@ -110,15 +110,15 @@ def path_menu():
     banner = title.render("Select an algorithm", True, RED)
     banner_x = center(banner, screen)
 
-    dj_button = buttons.Button(func=path_visual, click_args=[djikstra, "Djikstra"],
-                              sprite="Sprites/Buttons/Paths/Djikstra.png")
-    djik_x = center(dj_button.sprite, screen)
+    dj_button = buttons.Button(func=path_visual, click_args=[Dijkstra, "Dijkstra"],
+                              sprite="Sprites/Buttons/Paths/Dijkstra.png")
+    Dijk_x = center(dj_button.sprite, screen)
     ast_button = buttons.Button(func=path_visual, click_args=[astar, "A*"],
                               sprite="Sprites/Buttons/Paths/AStar.png")
     astar_x = center(ast_button.sprite, screen)
     screen_buttons = [back_button, dj_button, ast_button]
 
-    dj_button.draw(screen, (djik_x, 175))
+    dj_button.draw(screen, (Dijk_x, 175))
     ast_button.draw(screen, (astar_x, 375))
     back_button.draw(screen, (440, 565))
     screen.blit(banner, (banner_x, 50))
@@ -355,7 +355,7 @@ def path_visual(path_alg, name):
         pygame.display.flip()
         clock.tick(200)
 
-def djikstra(grid, end_points):
+def Dijkstra(grid, end_points):
     start, end = end_points
     has_path = True
     grid[start[1]][start[0]] = [0, None, False, False]
