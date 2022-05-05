@@ -411,8 +411,67 @@ def djikstra(grid, end_points):
     yield path
 
 
-def astar(grid):
-    print("A Star")
+def astar(grid, end_points):
+    start, end = end_points
+    has_path = True
+    grid[start[1]][start[0]] = [0, None, False, False]
+
+    curr = start
+    while curr != end:
+        grid[curr[1]][curr[0]][2] = True  # Visit the current
+        distance = grid[curr[1]][curr[0]][0]
+        # For all surrounding nodes, set new distance if needed
+        if curr[1] != 0:
+            m_dist = manhattan((curr[0], curr[1]-1), end)
+            if distance + 1 + m_dist < grid[curr[1]-1][curr[0]][0]: 
+                grid[curr[1]-1][curr[0]][0] = distance + 1 + m_dist 
+                grid[curr[1]-1][curr[0]][1] = curr
+           
+        if curr[0] != 0:
+            m_dist = manhattan((curr[0]-1, curr[1]), end)
+            if distance + 1 + m_dist < grid[curr[1]][curr[0]-1][0]: 
+                grid[curr[1]][curr[0]-1][0] = distance + 1 + m_dist 
+                grid[curr[1]][curr[0]-1][1] = curr
+
+        if curr[1] != 24:
+            m_dist = manhattan((curr[0], curr[1]+1), end)
+            if distance + 1 + m_dist < grid[curr[1]+1][curr[0]][0]: 
+                grid[curr[1]+1][curr[0]][0] = distance + 1 + m_dist 
+                grid[curr[1]+1][curr[0]][1] = curr
+           
+        if curr[0] != 24: 
+            m_dist = manhattan((curr[0]+1, curr[1]), end)
+            if distance + 1 + m_dist < grid[curr[1]][curr[0]+1][0]:
+                grid[curr[1]][curr[0]+1][0] = distance + 1 + m_dist 
+                grid[curr[1]][curr[0]+1][1] = curr
+
+        yield curr
+        #Calculate next shortest that isnt visited
+        minimum = (float('inf'), None)
+        for row in range(len(grid)):
+            for col in range(len(grid)):
+                to_be_checked = grid[row][col]
+                if to_be_checked[2] == False and to_be_checked[0] < minimum[0] \
+                        and to_be_checked[3] == False:
+                    minimum = (to_be_checked[0], (col, row))
+
+        if minimum[1] is None:
+            has_path = False
+            break
+        curr = minimum[1]
+
+    path = []
+    if has_path:
+        curr = grid[end[1]][end[0]][1]
+        while curr != start:
+            path.append(curr)
+            previous = grid[curr[1]][curr[0]][1]
+            curr = previous
+
+    yield path
+
+def manhattan(cell, end):
+    return abs(cell[0]-end[0]) + abs(cell[1]-end[1])
 
 
 def convert(mouse_pos):
