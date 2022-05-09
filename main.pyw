@@ -346,7 +346,8 @@ def path_visual(path_alg, name):
             cell = convert(event.pos)
             if cell != -1:
                 color_cell(cell, cell_colors[2], screen)
-                grid[cell[1]][cell[0]][3] = True
+                grid[cell[1]][cell[0]] = [float('inf'), None, False, True]
+                end_points = [i if i != cell else None for i in end_points]
         # Draw border around grid, we do this at end because otherwise tile selection on edge is glitchy
         rect = pygame.Rect(75, 110, 450, 450)
         pygame.draw.rect(screen, BLACK, rect, 5)
