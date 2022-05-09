@@ -293,7 +293,7 @@ def path_visual(path_alg, name, heuristic):
         pygame.draw.line(screen, BLACK, (75, 110 + (18*i)), (525, 110 + (18*i)))
     window.blit(screen, (0,0))
 
-    started = False
+    started = done = False
     blocking = False
     path = None
     is_selecting = [False, None]
@@ -311,7 +311,7 @@ def path_visual(path_alg, name, heuristic):
                     if clicked_button.name == "back":
                         return
                     elif clicked_button.name == "start" and not started \
-                            and None not in end_points:
+                            and not done and None not in end_points:
                         started = True  # Preventing user from editing grid while calculating
                         path = path_alg(grid, end_points, heuristic)
                     elif clicked_button.name == "Begin" and not started:
@@ -340,14 +340,14 @@ def path_visual(path_alg, name, heuristic):
             elif event.type == MOUSEBUTTONUP:
                 blocking = False
 
-        if started:
+        if started and not done:
             visited = next(path)
             if type(visited) == tuple:
                 color_cell(visited, ORANGE, screen)
             else:
                 for i in visited:
                     color_cell(i, PURPLE, screen)
-                started = False
+                done = True
         elif blocking:
             cell = convert(event.pos)
             if cell != -1:
